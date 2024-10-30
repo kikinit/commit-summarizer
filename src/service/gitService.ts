@@ -6,17 +6,20 @@ import { execSync } from 'child_process'
 
 export async function fetchLocalCommits(
   branch: string,
-  startCommit: string,
-  endCommit: string
+  startCommit?: string,
+  endCommit?: string
 ) {
-  const logCommand = `git log ${startCommit}..${endCommit} --pretty=format:"%H %s" --reverse`
+  // Build command based on provided commit range
+  const logCommand = startCommit && endCommit
+    ? `git log ${startCommit}..${endCommit} --pretty=format:"%H %s" --reverse`
+    : `git log ${branch} --pretty=format:"%H %s" --reverse`
+
   const result = execSync(logCommand).toString().trim()
 
   return result
-    ? result.split('\n').map((line: string) => {
-        const [hash, ...messageParts] = line.split(' ')
-        const message = messageParts.join(' ')
-        return { hash, message }
+    ? result.split('\n').map((line) => {
+        const [hash, ...message] = line.split(' ')
+        return { hash, message: message.join(' ') }
       })
     : []
 }
@@ -45,18 +48,17 @@ export async function fetchRemoteCommits(
 
 export async function fetchCommits(
   branch: string,
-  startCommit?: string,
-  endCommit?: string
+  startCommit: string,
+  endCommit: string,
+  forceRemote: boolean = false
 ) {
-  try {
-    const localCommits = await fetchLocalCommits(
-      branch,
-      startCommit ?? 'first_commit_hash',
-      endCommit ?? 'last_commit_hash'
-    )
-    if (localCommits.length) return localCommits
-  } catch (error) {
-    console.warn('Local fetch failed; attempting remote fetch...', error)
+  if (!forceRemote) {
+    try {
+      const localCommits = await fetchLocalCommits(branch, startCommit, endCommit)
+      if (localCommits.length) return localCommits
+    } catch (error) {
+      console.warn('Local fetch failed; attempting remote fetch...', error)
+    }
   }
 
   const { owner, repo } = getRepoInfo()
