@@ -1,17 +1,18 @@
 import { fetchLocalCommits, fetchRemoteCommits } from './service/gitService.js'
-import { summarizeCommits } from './service/llmService.js'
 
-export async function fetchCommits(branch: string, start?: string, end?: string, isRemote?: boolean) {
+export async function fetchCommits(
+  branch: string,
+  startCommit?: string,
+  endCommit?: string,
+  isRemote: boolean = false
+): Promise<void> {
   try {
     const commits = isRemote
       ? await fetchRemoteCommits(branch)
-      : await fetchLocalCommits(branch, start, end)
-    
-    console.log('Commits fetched:', commits)
+      : await fetchLocalCommits(branch, startCommit, endCommit)
 
-    const summary = await summarizeCommits(commits)
-    console.log('Commit Summary:', summary)
+    console.log('Commits fetched:', commits)
   } catch (error) {
-    console.error('Error fetching or summarizing commits:', error)
+    console.error('Error fetching commits:', error)
   }
 }
