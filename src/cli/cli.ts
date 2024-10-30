@@ -1,36 +1,48 @@
+import { getCurrentBranch } from '../utils/getCurrentBranch.js'
+
 import inquirer from 'inquirer'
 import { fetchCommits } from '../service/gitService.js'
-import { getBranchBoundCommits } from '../utils/getBranchBoundCommits.js'
 
 async function run() {
-  const branch = process.argv.includes('--branch') ? process.argv[process.argv.indexOf('--branch') + 1] : 'main'
-  const { startCommit, endCommit } = await getCommitRange(branch)
+  const { branch } = await inquirer.prompt({
+    type: 'input',
+    name: 'branch',
+    message: 'Enter the branch name:',
+    default: getCurrentBranch(),
+  })
 
-  console.log(`Fetching commits from ${branch} branch...`)
-  const commits = await fetchCommits(branch, startCommit, endCommit)
-  console.log(`Fetched ${commits.length} commits`)
-  console.log(commits)
-}
+  const { startCommit } = await inquirer.prompt({
+    type: 'input',
+    name: 'startCommit',
+    message:
+      'Enter the starting commit hash (leave blank for first commit in branch):',
+  })
 
-async function getCommitRange(branch: string) {
-  const { firstCommit, lastCommit } = await getBranchBoundCommits(branch)
-  const responses = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'startCommit',
-      message: `Enter starting commit hash (default: first commit on ${branch})`,
-      default: firstCommit
-    },
-    {
-      type: 'input',
-      name: 'endCommit',
-      message: `Enter ending commit hash (default: last commit on ${branch})`,
-      default: lastCommit
-    }
-  ])
-  return {
-    startCommit: responses.startCommit || firstCommit,
-    endCommit: responses.endCommit || lastCommit
+  const { endCommit } = await inquirer.prompt({
+    type: 'input',
+    name: 'endCommit',
+    message:
+      'Enter the ending commit hash (leave blank for latest commit in branch):',
+  })
+
+  const { forceRemote } = await inquirer.prompt({
+    type: 'confirm',
+    name: 'forceRemote',
+    message:
+      'Would you like to fetch directly from the remote (skip local fetch)?',
+    default: false,
+  })
+
+  try {
+    const commits = await fetchCommits(
+      branch,
+      startCommit || '',
+      endCommit || '',
+      forceRemote
+    )
+    console.log('Commits fetched:', commits)
+  } catch (error) {
+    console.error('Error fetching commits:', error)
   }
 }
 
