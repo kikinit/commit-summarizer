@@ -1,24 +1,25 @@
-import { fetchLocalCommits, fetchRemoteCommits } from './service/gitService.js'
+import { fetchRemoteCommits } from './services/gitService.js'
+import { getCurrentBranch, getBranchBoundCommits } from './utils/gitHelpers.js'
 
-export async function fetchCommits(
-  branch: string,
-  startCommit?: string,
-  endCommit?: string,
-  isRemoteFallback: boolean = true
-): Promise<void> {
+/**
+ * Main function to fetch and display commits from the current branch.
+ */
+async function run() {
   try {
-    const start = startCommit ?? 'first_commit_hash'
-    const end = endCommit ?? 'last_commit_hash'
-    let commits = await fetchLocalCommits(branch, start, end)
-        
-    // If no commits are found locally and remote fallback is enabled, fetch remotely
-    if (!commits.length && isRemoteFallback) {
-      console.log('No local commits found. Fetching from remote...')
-      commits = await fetchRemoteCommits(branch)
-    }
+    const branch = getCurrentBranch()
+    console.log(`Fetching commits from the current branch: ${branch}`)
 
-    console.log('Commits fetched:', commits)
+    // Adjusted property names to match getBranchBoundCommits function's return type
+    const { firstCommit, lastCommit } = await getBranchBoundCommits(branch)
+    const commits = await fetchRemoteCommits(branch, firstCommit, lastCommit)
+
+    console.log(`Fetched ${commits.length} commits:`)
+    commits.forEach(commit => {
+      console.log(`${commit.sha}: ${commit.commit.message}`)
+    })
   } catch (error) {
     console.error('Error fetching commits:', error)
   }
 }
+
+run()

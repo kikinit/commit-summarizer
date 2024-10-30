@@ -1,17 +1,7 @@
 import { execSync } from 'child_process'
-
-/**
- * Executes a Git command and returns the output as a string.
- * @param command - The Git command to execute.
- */
-export function executeGitCommand(command: string): string {
-  try {
-    return execSync(command).toString().trim()
-  } catch (error) {
-    console.error('Failed to execute Git command:', (error as Error).message)
-    throw new Error('Git command execution failed')
-  }
-}
+import axios from 'axios'
+import { config } from '../config/config.js'
+import { GitHubCommit } from 'types/GitHubCommit.js'
 
 /**
  * Retrieves the current branch name.
@@ -21,33 +11,31 @@ export function getCurrentBranch(): string {
 }
 
 /**
- * Gets the first and last commit hashes for a given branch.
+ * Gets the first and last commit hashes for the current branch from GitHub.
  * @param branch - The branch to retrieve commit bounds for.
- * @returns An object with firstCommit and lastCommit hashes.
  */
-export function getBranchBoundCommits(branch: string) {
-  try {
-    console.log(`Getting first and last commits for branch: ${branch}`)
-    const firstCommit = execSync(`git rev-list --max-parents=0 ${branch}`)
-      .toString()
-      .trim()
-    const lastCommit = execSync(`git rev-parse ${branch}`).toString().trim()
-    console.log(`First commit: ${firstCommit}, Last commit: ${lastCommit}`)
-    return { firstCommit, lastCommit }
-  } catch (error) {
-    console.error('Error retrieving branch bound commits:', error)
-    throw error
-  }
+export async function getBranchBoundCommits(branch: string): Promise<{ firstCommit: string, lastCommit: string }> {
+  const url = `https://api.github.com/repos/${config.githubOwner}/${config.githubRepo}/commits?sha=${branch}`
+  const response = await axios.get(url, {
+    headers: { Authorization: `Bearer ${config.githubToken}` },
+  })
+
+  const commits = response.data as GitHubCommit[]
+  const firstCommit = commits[commits.length - 1].sha
+  const lastCommit = commits[0].sha
+
+  return { firstCommit, lastCommit }
 }
 
 /**
- * Retrieves GitHub repository information (owner and repo) from Git origin URL.
+ * Executes a Git command and returns the output as a string.
+ * @param command - The Git command to execute.
  */
-export function getRepoInfo() {
-  const originUrl = executeGitCommand('git config --get remote.origin.url')
-  const match = originUrl.match(/github\.com[:\/](.+)\/(.+)\.git/)
-  if (match) {
-    return { owner: match[1], repo: match[2] }
+function executeGitCommand(command: string): string {
+  try {
+    return execSync(command).toString().trim()
+  } catch (error) {
+    console.error('Failed to execute Git command:', (error as Error).message)
+    throw new Error('Git command execution failed')
   }
-  throw new Error('Could not determine GitHub repository information')
 }

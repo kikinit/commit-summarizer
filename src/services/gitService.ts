@@ -17,14 +17,12 @@ export async function fetchRemoteCommits(
   try {
     let url = `https://api.github.com/repos/${config.githubOwner}/${config.githubRepo}/commits?sha=${branch}`
 
-    // Fetch commits from the remote repository
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${config.githubToken}` },
     })
 
     let commits = response.data as GitHubCommit[]
 
-    // Filter commits based on start and end hash if provided
     if (startCommit || endCommit) {
       const startIndex = commits.findIndex(commit => commit.sha === startCommit) || 0
       const endIndex = commits.findIndex(commit => commit.sha === endCommit) + 1 || commits.length

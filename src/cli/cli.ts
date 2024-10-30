@@ -1,37 +1,36 @@
 import inquirer from 'inquirer'
-import { fetchCommits } from '../service/gitService.js'
-import { getBranchBoundCommits } from '../utils/getBranchBoundCommits.js'
+import { fetchRemoteCommits } from '../services/gitService.js'
+import { getCurrentBranch, getBranchBoundCommits } from '../utils/gitHelpers.js'
 
-async function run() {
-  const branch = process.argv.includes('--branch') ? process.argv[process.argv.indexOf('--branch') + 1] : 'main'
-  const { startCommit, endCommit } = await getCommitRange(branch)
+/**
+ * Prompts user for commit range customization within the current branch.
+ */
+async function promptUserForCommits() {
+  const branch = getCurrentBranch()
+  console.log(`Current branch detected: ${branch}`)
 
-  console.log(`Fetching commits from ${branch} branch...`)
-  const commits = await fetchCommits(branch, startCommit, endCommit)
-  console.log(`Fetched ${commits.length} commits`)
-  console.log(commits)
-}
-
-async function getCommitRange(branch: string) {
   const { firstCommit, lastCommit } = await getBranchBoundCommits(branch)
-  const responses = await inquirer.prompt([
+
+  const { startCommit, endCommit } = await inquirer.prompt([
     {
       type: 'input',
       name: 'startCommit',
       message: `Enter starting commit hash (default: first commit on ${branch})`,
-      default: firstCommit
+      default: firstCommit,
     },
     {
       type: 'input',
       name: 'endCommit',
       message: `Enter ending commit hash (default: last commit on ${branch})`,
-      default: lastCommit
-    }
+      default: lastCommit,
+    },
   ])
-  return {
-    startCommit: responses.startCommit || firstCommit,
-    endCommit: responses.endCommit || lastCommit
-  }
+
+  const commits = await fetchRemoteCommits(branch, startCommit, endCommit)
+  console.log(`Fetched ${commits.length} commits:`)
+  commits.forEach(commit => {
+    console.log(`${commit.sha}: ${commit.commit.message}`)
+  })
 }
 
-run()
+promptUserForCommits()
