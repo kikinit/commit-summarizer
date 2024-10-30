@@ -1,0 +1,44 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# TypeScript files
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# MacOS
+.DS_Store
+
+# Miscellaneous
+.vscode/
+.idea/
+*.sublime-workspace
+
+### Custom ###
+
+# Dev notes
+devnotes*
+
+# Aux dev files
+aux/
+
+# Manual test files
+manual-test.js
+
+# Run scripts with env variables
+start-dev.sh
+start.sh

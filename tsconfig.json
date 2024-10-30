@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es6",                 // Transpile output to ES6 for compatibility
+    "module": "esnext",              // Use ES module syntax in output
+    "lib": ["esnext", "dom"],        // Include modern JavaScript and DOM library features
+    "strict": true,                  // Enable strict type-checking
+    "esModuleInterop": true,         // Improves compatibility with CommonJS modules
+    "moduleResolution": "node",      // Use Node.js module resolution
+    "forceConsistentCasingInFileNames": true, // Enforce consistent file name casing
+    "skipLibCheck": true,            // Skip type checking of declaration files
+    "baseUrl": "./src",              // Set baseUrl to src to enable shorter imports
+    "outDir": "./dist",              // Output directory for transpiled code
+    "rootDir": "./src"               // Root directory of input files
+  },
+  "include": ["src/**/*"],           // Include all TypeScript files in the src directory
+  "exclude": ["node_modules", "dist"] // Exclude node_modules and dist directories
+}
